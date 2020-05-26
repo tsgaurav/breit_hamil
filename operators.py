@@ -84,3 +84,21 @@ def LdotS_state(r_sph, n, l, j, mj):
         state_sum += -1j*np.dot(theta_term*Stheta + phi_term*Sphi, s_up*cgc(l, 1/2, j, ml, 1/2, mj)+s_down*cgc(l, 1/2, j, ml, -1/2, mj))
 
     return state_sum
+
+def p_phi_state(r_sph, n, l, j, mj):
+    r, theta, phi = r_sph
+    state_sum = 0.
+
+    for ml in np.arange(-l, l+1, 1):
+        phi_term = r*dtheta_sphharm(ml, l, theta, phi)*laguerre_wave_function(r, n, l)
+        state_sum+=phi_term * (s_up*cgc(l, 1/2, j, ml, 1/2, mj)+s_down*cgc(l, 1/2, j, ml, -1/2, mj))
+    return -1j*state_sum
+
+def p_theta_state(r_sph, n, l, j, mj):
+    r, theta, phi = r_sph
+    state_sum = 0.
+
+    for ml in np.arange(-l, l+1, 1):
+        theta_term = -r*dphi_sphharm(ml, l, theta, phi)*laguerre_wave_function(r, n, l)
+        state_sum+=theta_term * (s_up*cgc(l, 1/2, j, ml, 1/2, mj)+s_down*cgc(l, 1/2, j, ml, -1/2, mj))
+    return -1j*state_sum

@@ -77,7 +77,7 @@ def r12_sph(r1, theta1, phi1, r2, theta2, phi2):
 
 
 n1, l1, j1, n2, l2, j2 = [0, 1, 1/2, 0, 1, 1/2]
-n3, l3, j3, n4, l4, j4 = [0, 0, 1/2, 0, 0, 1/2]
+n3, l3, j3, n4, l4, j4 = [0, 1, 1/2, 0, 1, 1/2]
 J, M = [0, 0]
 
 def norm_test(r_sph_doub):
@@ -144,6 +144,46 @@ def spin_spin(r_sph):
     return g_e*8*np.pi*alpha**2*integrand*J_det/(3*expon.pdf([r1, r2], scale=scale).prod())
 
 
+def spin_orb_2b(r_sph_doub):
+
+    r1, theta1, phi1, r2, theta2, phi2 = r_sph_doub
+    r_sph1 = np.array([r1, theta1, phi1])
+    r_sph2 = np.array([r2, theta2, phi2])
+
+    Stheta1 = -np.sin(theta1)*Sx+np.cos(theta1)*Sy
+    Sphi1 = np.cos(phi1)*np.cos(theta1)*Sx + np.cos(phi1)*np.sin(theta1)*Sy - np.sin(phi1)*Sz
+
+    Stheta2 = -np.sin(theta2)*Sx+np.cos(theta2)*Sy
+    Sphi2 = np.cos(phi2)*np.cos(theta2)*Sx + np.cos(phi2)*np.sin(theta2)*Sy - np.sin(phi2)*Sz
+
+    integrand = 0
+    for m1 in np.arange(-j1, j1+1, 1):
+        for m2 in np.arange(-j2, j2+1, 1):
+            for m3 in np.arange(-j3, j3+1, 1):
+                for m4 in np.arange(-j4, j4+1, 1):
+                    if m1+m2!=M: continue
+                    if m3+m4!=M: continue
+
+                    a_conj = make_state(r_sph1, n1, l1, j1, m1).conj()
+                    b_conj = make_state(r_sph2, n2, l2, j2, m2).conj()
+                    d = make_state(r_sph2, n4, l4, j4, m4)
+                    c_p_phi = p_phi_state(r_sph1, n3, l3, j3, m3)
+                    c_p_theta = p_theta_state(r_sph1, n3, l3, j3, m3)
+
+                    term1 = np.dot(a_conj, np.dot(Stheta1, r1*c_p_phi))*np.dot(b_conj, d)*-2
+                    term2 = np.dot(a_conj, np.dot(Sphi1, r1*c_p_theta))*np.dot(b_conj, d)*2
+                    term3 = np.dot(a_conj,r1*c_p_phi)*np.dot(b_conj, np.dot(Stheta2, d))*-1
+                    term4 = np.dot(a_conj,r1*c_p_theta)*np.dot(b_conj, np.dot(Sphi2, d))
+                    term5 = np.dot(a_conj, np.dot(Stheta1, c_p_phi))*np.dot(b_conj, r2*d)*2
+                    term6 = np.dot(a_conj, np.dot(Sphi1, c_p_theta))*np.dot(b_conj, r2*d)*-2
+                    term7 = np.dot(a_conj,c_p_phi)*np.dot(b_conj, np.dot(r2*Stheta2, d))
+                    term8 = np.dot(a_conj,c_p_theta)*np.dot(b_conj, np.dot(r2*Sphi2, d))*-1
+
+                    integrand+=(term1+term2+term3+term4+term5+term6+term7+term8)*cgc(j1, j2, J, m1, m2, M)*cgc(j3, j4, J, m3, m4, M)
+
+    J_det = (np.sin(phi1)*(r1**2))*(np.sin(phi2)*(r2**2))
+    return alpha**2*J_det*integrand/(4*r12_sph(r1, theta1, phi1, r2, theta2, phi2)**3)
+
 def sampler_three():
     while True:
         u = random.uniform(0, 20)
@@ -153,25 +193,23 @@ def sampler_three():
 
 def sampler_six():
     while True:
-        u1 = np.random.exponential(scale)
+        u1 = random.uniform(0, 10)#np.random.exponential(scale=scale)
         theta1 = random.uniform(0, 2*math.pi)
         phi1 = random.uniform(0, math.pi)
-        u2 = np.random.exponential(scale)
+        u2 = random.uniform(0, 10)#np.random.exponential(scale=scale)
         theta2 = random.uniform(0, 2*math.pi)
         phi2 = random.uniform(0, math.pi)
         yield (u1, theta1, phi1, u2, theta2, phi2)
 
 domainsize3 = 20*2*math.pi**2
-domainsize6 = 4*math.pi**4
-nmc = 1000
-scale = 1
+domainsize6 = 100*4*math.pi**4
+nmc = 10000
+scale = 5
 
 
 start = time.time()
-result, error = mcint.integrate(spin_orb_1b, sampler_three(), measure=domainsize3, n=nmc)
-#result, error = mcint.integrate(norm_test, sampler_six(), measure=domainsize6, n=nmc)
-
-
+#result, error = mcint.integrate(spin_orb_1b, sampler_three(), measure=domainsize3, n=nmc)
+result, error = mcint.integrate(spin_orb_2b, sampler_six(), measure=domainsize6, n=nmc)
 
 print("Result = ", result.real)
 print("Error estimate =", error)
