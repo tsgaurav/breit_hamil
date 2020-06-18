@@ -64,13 +64,29 @@ def f(r_sph1):
     b = make_state(r_sph1, 0, 1, 1/2, 1/2)
     return (J_det*np.dot(a, b.conj())/u)
     #return J_det*(np.abs(make_state(r_sph1, 1, 1, 1/2, 1/2)[0])**2+np.abs(make_state(r_sph1, 1, 1, 1/2, 1/2)[1])**2)
-
+"""
 def spin_orb_1b(r_sph):
     r, theta, phi = r_sph
     J_det = np.sin(phi)*(r**2)
     a = make_state(r_sph, 0, 1, 3/2, 1/2)
     b = LdotS_state(r_sph, 0, 1, 3/2, 1/2)
     return 0.5*(alpha**2)*(J_det*np.dot(a, b.conj())/(r**3)).real
+"""
+
+def spin_orb_1b(r_sph):
+    r, theta, phi = r_sph
+    J_det = np.sin(phi)*(r**2)
+
+    Stheta = -np.sin(theta)*Sx+np.cos(theta)*Sy
+    Sphi = np.cos(phi)*np.cos(theta)*Sx + np.cos(phi)*np.sin(theta)*Sy - np.sin(phi)*Sz
+
+    a_conj = make_state(r_sph, 0, 1, 3/2, 1/2).conj()
+    b_phi = np.dot(Stheta, p_phi_state(r_sph, 0, 1, 3/2, 1/2))
+    b_theta = np.dot(Sphi, p_theta_state(r_sph, 0, 1, 3/2, 1/2))
+
+    integral = np.dot(a_conj, r*b_phi)-np.dot(a_conj, r*b_theta)
+    return integral*J_det*(alpha**2)/(2*r**3)
+
 
 def r12_sph(r1, theta1, phi1, r2, theta2, phi2):
     return np.sqrt(r1**2+r2**2-2*r1*r2*(np.sin(theta1)*np.sin(theta2)*np.cos(phi1-phi2)-np.cos(theta1)*np.cos(theta2)))
@@ -138,7 +154,7 @@ def spin_spin(r_sph):
     #print(integrand*J_det/denom)
     return g_e*8*np.pi*alpha**2*integrand*J_det/(3*expon.pdf([r1, r2], scale=scale).prod())
 
-
+"""
 def spin_orb_2b(r_sph_doub):
 
     r1, theta1, phi1, r2, theta2, phi2 = r_sph_doub
@@ -178,7 +194,46 @@ def spin_orb_2b(r_sph_doub):
 
     J_det = (np.sin(phi1)*(r1**2))*(np.sin(phi2)*(r2**2))
     return alpha**2*J_det*integrand/(4*r12_sph(r1, theta1, phi1, r2, theta2, phi2)**3)
-
+"""
+def spin_orb_2b(r_sph_doub):
+    r1, theta1, phi1, r2, theta2, phi2 = r_sph_doub
+    r_sph1 = np.array([r1, theta1, phi1])
+    r_sph2 = np.array([r2, theta2, phi2])
+    
+    Stheta1 = -np.sin(theta1)*Sx+np.cos(theta1)*Sy
+    Sphi1 = np.cos(phi1)*np.cos(theta1)*Sx + np.cos(phi1)*np.sin(theta1)*Sy - np.sin(phi1)*Sz
+    
+    J_det = (np.sin(phi1)*(r1**2))*(np.sin(phi2)*(r2**2))
+    integrand = 0.
+    
+    for m1 in np.arange(-j1, j1+1, 1):
+        for m2 in np.arange(-j2, j2+1, 1):
+            for m3 in np.arange(-j3, j3+1, 1):
+                for m4 in np.arange(-j4, j4+1, 1):
+                    if m1+m2!=M: continue
+                    if m3+m4!=M: continue
+                        
+                    a_conj = make_state(r_sph1, n1, l1, j1, m1).conj()
+                    b_conj = make_state(r_sph2, n2, l2, j2, m2).conj()
+                    c_p_phi = np.dot(Stheta1, p_phi_state(r_sph1, n3, l3, j3, m3))
+                    c_p_theta = np.dot(Sphi1, p_theta_state(r_sph1, n3, l3, j3, m3))
+                    c_Sphi = np.dot(Sphi1, make_state(r_sph1, n3, l3, j3, m3))
+                    c_Stheta = np.dot(Stheta1, make_state(r_sph1, n3, l3, j3, m3))
+                    d_p_phi = p_phi_state(r_sph2, n4, l4, j4, m4)
+                    d_p_theta = p_theta_state(r_sph2, n4, l4, j4, m4)
+                    d = make_state(r_sph2, n4, l4, j4, m4)
+                    
+                    term1 = 2*np.dot(a_conj, r1*c_Sphi)*np.dot(b_conj, d_p_theta)
+                    term2 = -2*np.dot(a_conj, r1*c_Stheta)*np.dot(b_conj, d_p_phi)
+                    term3 = -2*np.dot(a_conj, c_Sphi)*np.dot(b_conj, r2*d_p_theta)
+                    term4 = 2*np.dot(a_conj, c_Stheta)*np.dot(b_conj, r2*d_p_phi)
+                    term5 = -np.dot(a_conj, r1*c_p_theta)*np.dot(b_conj, d)
+                    term6 = np.dot(a_conj, r1*c_p_phi)*np.dot(b_conj, d)
+                    term7 = np.dot(a_conj, c_p_theta)*np.dot(b_conj, r2*d)
+                    term8 = -np.dot(a_conj, c_p_phi)*np.dot(b_conj, r2*d)
+                    
+                    integrand+=(term1+term2+term3+term4+term5+term6+term7+term8)*cgc(j1, j2, J, m1, m2, M)*cgc(j3, j4, J, m3, m4, M)
+    return J_det*integrand/(r12_sph(r1, theta1, phi1, r2, theta2, phi2)**3)   #*(alpha**2/4)
 
 def orb_orb_2b(r_sph_doub):
 
@@ -234,10 +289,10 @@ def sampler_six():
 
 domainsize3 = 20*2*math.pi**2
 domainsize6 = 400*4*math.pi**4
-nmc = 1000
+nmc = 10000
 scale = 5
 
-n1, l1, j1, n2, l2, j2 = [0, 1, 1/2, 0, 1, 1/2]
+n1, l1, j1, n2, l2, j2 = [0, 1, 3/2, 0, 1, 3/2]
 n3, l3, j3, n4, l4, j4 = [0, 1, 1/2, 0, 1, 1/2]
 J, M = [0, 0]
 
