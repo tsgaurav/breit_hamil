@@ -6,4 +6,4 @@ Code for running Monte-Carlo integrations using the mcint package for matrix ele
 Parameters for the matrix element quantum numbers and the tunable monte carlo parameters can be set in main.py
 
 Importance sampling using gamma function PDFs has been implemented, with the gamma pdf given by:
-\beta
+![alt text](https://wikimedia.org/api/rest_v1/media/math/render/svg/e17d7cc2f7f0e724776f777dc6552b261fea46fe)
