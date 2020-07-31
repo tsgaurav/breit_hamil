@@ -40,8 +40,7 @@ def spinor(ms):
     elif ms==-1/2:
         return np.array([0.,1.])
 
-def laguerre_wave_function(x, n, l):
-    zeta = 1
+def laguerre_wave_function(x, n, l, zeta):
     """
     Laguerre function, see [A. E. McCoy and M. A. Caprio, J. Math. Phys. 57, (2016).] for details
     """
@@ -49,12 +48,12 @@ def laguerre_wave_function(x, n, l):
     return np.sqrt(2.0 * gamma(n+1) / (zeta * gamma(n+2*l+3)) ) * 2.0 * eta**l *\
               np.exp(-0.5*eta) * assoc_laguerre(eta, n, 2*l+2) / zeta
 
-def make_state(r_sph, n, l, j, mj):
+def make_state(r_sph, n, l, j, mj, zeta):
     r, theta, phi = r_sph
     state_sum = 0.
     for ml in np.arange(-l, l+1, 1):  #check limits
             state_sum= state_sum+np.array([cgc(l, 1/2, j, ml, 1/2, mj)*sph_harm(ml, l, theta, phi),cgc(l, 1/2, j, ml, -1/2, mj)*sph_harm(ml, l, theta, phi)])
-    return laguerre_wave_function(r, n, l)*state_sum
+    return laguerre_wave_function(r, n, l, zeta)*state_sum
 
 
 def f(r_sph1):
@@ -66,6 +65,15 @@ def f(r_sph1):
     b = make_state(r_sph1, 0, 2, 3/2, 1/2)
     return (J_det*np.dot(a, b.conj())/(u))/gam.pdf(u, a_gam, scale=scale)
     #return J_det*(np.abs(make_state(r_sph1, 1, 1, 1/2, 1/2)[0])**2+np.abs(make_state(r_sph1, 1, 1, 1/2, 1/2)[1])**2)
+
+
+def normal_ms(r_sph):
+    zeta = 1
+    r, theta, phi = r_sph
+    J_det = np.sin(phi)*(r**2) 
+    a_conj = make_state(r_sph, 0, 1, 1/2, 1/2, zeta).conj()
+    b_pp_state = p_p_state(r_sph, 0, 1, 1/2, 1/2, zeta) 
+    return J_det*np.dot(a_conj, b_pp_state)/2
 """
 def spin_orb_1b(r_sph):
     r, theta, phi = r_sph
@@ -93,7 +101,7 @@ def spin_orb_1b(r_sph):
 def r12_sph(r1, theta1, phi1, r2, theta2, phi2):
     return np.sqrt(r1**2+r2**2-2*r1*r2*(np.sin(theta1)*np.sin(theta2)*np.cos(phi1-phi2)-np.cos(theta1)*np.cos(theta2)))
 
-def coul_2b(r_sph_doub, n1, l1, j1, n2, l2, j2, n3, l3, j3, n4, l4, j4, J, M):
+def coul_2b(r_sph_doub, n1, l1, j1, n2, l2, j2, n3, l3, j3, n4, l4, j4, J, M, zeta):
     r1, theta1, phi1, r2, theta2, phi2 = r_sph_doub
     r_sph1 = np.array([r1, theta1, phi1])
     r_sph2 = np.array([r2, theta2, phi2])
@@ -104,17 +112,47 @@ def coul_2b(r_sph_doub, n1, l1, j1, n2, l2, j2, n3, l3, j3, n4, l4, j4, J, M):
                 for m4 in np.arange(-j4, j4+1, 1):
                     if m1+m2!=M: continue
                     if m3+m4!=M: continue
-                    a = make_state(r_sph1, n1, l1, j1, m1)
-                    b = make_state(r_sph2, n2, l2, j2, m2)
-                    c = make_state(r_sph1, n3, l3, j3, m3)
-                    d = make_state(r_sph2, n4, l4, j4, m4)
+                    a = make_state(r_sph1, n1, l1, j1, m1, zeta)
+                    b = make_state(r_sph2, n2, l2, j2, m2, zeta)
+                    c = make_state(r_sph1, n3, l3, j3, m3, zeta)
+                    d = make_state(r_sph2, n4, l4, j4, m4, zeta)
 
                     integrand+=np.dot(a.conj(), c)*np.dot(b.conj(), d)*cgc(j1, j2, J, m1, m2, M)*cgc(j3, j4, J, m3, m4, M)
     
     denom = r12_sph(r1, theta1, phi1, r2, theta2, phi2)
-    J_det = (np.sin(phi1)*(r1**2))*(np.sin(phi2)*(r2**2))
+    J_det = (np.sin(phi1)*((r1)**2))*(np.sin(phi2)*((r2)**2))
     #print(integrand*J_det/denom)
     return integrand*J_det/denom
+
+def specific_ms(r_sph_doub, n1, l1, j1, n2, l2, j2, n3, l3, j3, n4, l4, j4, J, M, zeta):
+    r1, theta1, phi1, r2, theta2, phi2 = r_sph_doub
+    r_sph1 = np.array([r1, theta1, phi1])
+    r_sph2 = np.array([r2, theta2, phi2])
+    integrand = 0
+    for m1 in np.arange(-j1, j1+1, 1):
+        for m2 in np.arange(-j2, j2+1, 1):
+            for m3 in np.arange(-j3, j3+1, 1):
+                for m4 in np.arange(-j4, j4+1, 1):
+                    if m1+m2!=M: continue
+                    if m3+m4!=M: continue
+                    a = make_state(r_sph1, n1, l1, j1, m1, zeta)
+                    b = make_state(r_sph2, n2, l2, j2, m2, zeta)
+                    c_p_phi = p_phi_state(r_sph1, n3, l3, j3, m3, zeta)
+                    c_p_theta = p_theta_state(r_sph1, n3, l3, j3, m3, zeta)
+                    c_p_r = p_r_state(r_sph1, n3, l3, j3, m3, zeta)
+                    d_p_phi = p_phi_state(r_sph2, n4, l4, j4, m4, zeta)
+                    d_p_theta = p_theta_state(r_sph2, n4, l4, j4, m4, zeta)
+                    d_p_r = p_r_state(r_sph2, n4, l4, j4, m4, zeta)
+
+                    term1 = np.dot(a.conj(), c_p_r)*np.dot(b.conj(), d_p_r)
+                    term2 = np.dot(a.conj(), c_p_phi)*np.dot(b.conj(), d_p_phi)
+                    term3 = np.dot(a.conj(), c_p_theta)*np.dot(b.conj(), d_p_theta)
+
+                    integrand+=(term1+term2+term3)*cgc(j1, j2, J, m1, m2, M)*cgc(j3, j4, J, m3, m4, M)
+
+    J_det = (np.sin(phi1)*((r1)**2))*(np.sin(phi2)*((r2)**2))
+    return integrand*J_det
+
 
 def darwin(r_sph):
     r1, theta1, phi1= r_sph
