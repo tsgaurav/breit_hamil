@@ -71,8 +71,8 @@ def normal_ms(r_sph):
     zeta = 1
     r, theta, phi = r_sph
     J_det = np.sin(phi)*(r**2) 
-    a_conj = make_state(r_sph, 0, 1, 1/2, 1/2, zeta).conj()
-    b_pp_state = p_p_state(r_sph, 0, 1, 1/2, 1/2, zeta) 
+    a_conj = make_state(r_sph, 2, 0,  1/2, 1/2, zeta).conj()
+    b_pp_state = p_p_state(r_sph, 1, 0, 1/2, 1/2, zeta) 
     return J_det*np.dot(a_conj, b_pp_state)/2
 """
 def spin_orb_1b(r_sph):
@@ -128,7 +128,7 @@ def specific_ms(r_sph_doub, n1, l1, j1, n2, l2, j2, n3, l3, j3, n4, l4, j4, J, M
     r1, theta1, phi1, r2, theta2, phi2 = r_sph_doub
     r_sph1 = np.array([r1, theta1, phi1])
     r_sph2 = np.array([r2, theta2, phi2])
-    integrand = 0
+    integrand = 0.
     for m1 in np.arange(-j1, j1+1, 1):
         for m2 in np.arange(-j2, j2+1, 1):
             for m3 in np.arange(-j3, j3+1, 1):

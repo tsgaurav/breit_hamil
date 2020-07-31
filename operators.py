@@ -62,7 +62,7 @@ def lag_deriv(x, n, l):
     if n==0:
         t2 = 0
     else:
-        t2 = 2*(eta)**l*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
+        t2 = -2*(eta)**l*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
     return (t1+t2)*np.sqrt(2.0 * gamma(n+1) / (gamma(n+2*l+3)) ) * 2.0  - laguerre_wave_function(x, n, l)
 
 def lag_deriv(x, n, l, zeta):
@@ -71,7 +71,7 @@ def lag_deriv(x, n, l, zeta):
     if n==0:
         t2 = 0
     else:
-        t2 = (2/zeta)*(eta)**l*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
+        t2 = -(2/zeta)*(eta)**l*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
     return (t1+t2)*np.sqrt(2.0 * gamma(n+1) / (gamma(n+2*l+3)) ) * 2.0  - laguerre_wave_function(x, n, l, zeta)
 
 def lag_double_deriv(x, n, l, zeta):
@@ -81,10 +81,10 @@ def lag_double_deriv(x, n, l, zeta):
         t2 = 0
         t3 = 0
     elif n==1:
-        t2 = -(8*l*eta**(l-1)/zeta**2 - 2*eta**l / zeta)*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
+        t2 = -2*(8*l*eta**(l-2)/zeta**2 - 2*eta**l / zeta)*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
         t3 = 0
     else:
-        t2 = -(8*l*eta**(l-1)/zeta**2 - 2*eta**l / zeta)*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
+        t2 = -2*(8*l*eta**(l-2)/zeta**2 - 2*eta**l / zeta)*np.exp(-eta*0.5)*assoc_laguerre(eta, n-1, 2*l+3)
         t3 = 4*(eta**l)*np.exp(-eta*0.5)*assoc_laguerre(eta, n-2, 2*l+4)/zeta**2
     return (t1+t2+t3)*np.sqrt(2.0 * gamma(n+1) / (gamma(n+2*l+3)) ) * 2.0 - 2*l* laguerre_wave_function(x, n, l, zeta) - lag_deriv(x, n, l, zeta)
 
@@ -104,10 +104,13 @@ def dtheta2_sph_harm(m, n, theta, phi):
 def dphi2_sph_harm(m, n, theta, phi):
     if m==n:
         return m*(m/np.tan(phi)**2 - 1/np.sin(phi)**2)*sph_harm(m, n, theta, phi)
+    elif (n-m)==1:
+        return m*(m/np.tan(phi)**2 - 1/np.sin(phi)**2)*sph_harm(m, n, theta, phi) + \
+               np.sqrt((n-m)*(n+m+1))*np.exp(-1j*theta)*sph_harm(m+1, n, theta, phi)*(2*m+1)/np.tan(phi)
     else:
         return m*(m/np.tan(phi)**2 - 1/np.sin(phi)**2)*sph_harm(m, n, theta, phi) + \
-                ((n-m)*(n+m+1))**0.5*np.exp(-1j*theta)*sph_harm(m+1, n, theta, phi)*(2*m+1)/np.tan(phi) + \
-                ((n-m)*(n-m-1)*(m+n+2)*(m+n+1))**0.5 * np.exp(-2j*theta)*sph_harm(m+2, n, theta, phi) 
+               np.sqrt((n-m)*(n+m+1))*np.exp(-1j*theta)*sph_harm(m+1, n, theta, phi)*(2*m+1)/np.tan(phi)+ \
+               np.sqrt((n-m)*(n-m-1)*(m+n+2)*(m+n+1)) * np.exp(-2j*theta)*sph_harm(m+2, n, theta, phi)
 
 
 def LdotS_state(r_sph, n, l, j, mj):
@@ -133,10 +136,10 @@ def p_p_state(r_sph, n, l, j, mj, zeta):
     state_sum = 0.
     for ml in np.arange(-l, l+1, 1):
 
-        r_term  = (2*lag_deriv(r, n, l, zeta)+lag_double_deriv(r, n, l, zeta))*sph_harm(ml, l, theta, phi)/r
+        r_term  =  (2*lag_deriv(r, n, l, zeta)/r+lag_double_deriv(r, n, l, zeta))*sph_harm(ml, l, theta, phi)
 
         theta_term = laguerre_wave_function(r, n, l, zeta) * dtheta2_sph_harm(ml, l, theta, phi)/(r*r*np.sin(phi)**2)
-
+        
         phi_term = laguerre_wave_function(r, n, l, zeta) * (dphi2_sph_harm(ml, l, theta, phi) + dphi_sphharm(ml, l, theta, phi)/np.tan(phi))/r**2 
 
         state_sum += (s_up*cgc(l, 1/2, j, ml, 1/2, mj)+s_down*cgc(l, 1/2, j, ml, -1/2, mj)) * (r_term + theta_term + phi_term)
