@@ -202,3 +202,9 @@ def p_phi_state(r_sph, n, l, j, mj, zeta):
         phi_term = dphi_sphharm(ml, l, theta, phi)
         state_sum+=phi_term * (s_up*cgc(l, 1/2, j, ml, 1/2, mj)+s_down*cgc(l, 1/2, j, ml, -1/2, mj))
     return -1j*state_sum*radial
+
+def R(theta, phi):
+    return np.array([[np.sin(phi)*np.cos(theta), np.sin(phi)*np.sin(theta), np.cos(phi)],[np.cos(phi)*np.cos(theta), np.cos(phi)*np.sin(theta), -np.sin(phi)],[-np.sin(theta), np.cos(theta), 0]])
+
+def dot_mat(theta1, phi1, theta2, phi2):
+    return np.dot(R(theta1, phi1).T, R(theta2, phi2))

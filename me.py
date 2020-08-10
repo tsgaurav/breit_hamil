@@ -74,6 +74,25 @@ def normal_ms(r_sph):
     a_conj = make_state(r_sph, 2, 0,  1/2, 1/2, zeta).conj()
     b_pp_state = p_p_state(r_sph, 1, 0, 1/2, 1/2, zeta) 
     return J_det*np.dot(a_conj, b_pp_state)/2
+
+def normal_ms_alt(r_sph):
+    zeta = 1
+    r, theta, phi = r_sph
+    J_det = np.sin(phi)*(r**2)
+    
+    n1, l1, j1, m1 = [2, 0, 1/2, 1/2]
+    n2, l2, j2, m2 = [0, 0, 1/2, 1/2]
+
+    a_p_phi = p_phi_state(r_sph, n1, l1, j1, m1, zeta)
+    a_p_theta = p_theta_state(r_sph, n1, l1, j1, m1, zeta)
+    a_p_r = p_r_state(r_sph, n1, l1, j1, m1, zeta)
+    b_p_phi = p_phi_state(r_sph, n2, l2, j2, m2, zeta)
+    b_p_theta = p_theta_state(r_sph, n2, l2, j2, m2, zeta)
+    b_p_r = p_r_state(r_sph, n2, l2, j2, m2, zeta)
+    
+    return J_det*(np.dot(a_p_phi.conj(), b_p_phi)+np.dot(a_p_theta.conj(), b_p_theta)+np.dot(a_p_r.conj(), b_p_r))/2 
+
+
 """
 def spin_orb_1b(r_sph):
     r, theta, phi = r_sph
@@ -137,18 +156,24 @@ def specific_ms(r_sph_doub, n1, l1, j1, n2, l2, j2, n3, l3, j3, n4, l4, j4, J, M
                     if m3+m4!=M: continue
                     a = make_state(r_sph1, n1, l1, j1, m1, zeta)
                     b = make_state(r_sph2, n2, l2, j2, m2, zeta)
+                    
                     c_p_phi = p_phi_state(r_sph1, n3, l3, j3, m3, zeta)
                     c_p_theta = p_theta_state(r_sph1, n3, l3, j3, m3, zeta)
                     c_p_r = p_r_state(r_sph1, n3, l3, j3, m3, zeta)
                     d_p_phi = p_phi_state(r_sph2, n4, l4, j4, m4, zeta)
                     d_p_theta = p_theta_state(r_sph2, n4, l4, j4, m4, zeta)
                     d_p_r = p_r_state(r_sph2, n4, l4, j4, m4, zeta)
+                    
+                    c = np.array([c_p_r, c_p_phi, c_p_theta])
+                    d = np.array([d_p_r, d_p_phi, d_p_theta])
+                    mat_sum = 0.
 
-                    term1 = np.dot(a.conj(), c_p_r)*np.dot(b.conj(), d_p_r)
-                    term2 = np.dot(a.conj(), c_p_phi)*np.dot(b.conj(), d_p_phi)
-                    term3 = np.dot(a.conj(), c_p_theta)*np.dot(b.conj(), d_p_theta)
-
-                    integrand+=(term1+term2+term3)*cgc(j1, j2, J, m1, m2, M)*cgc(j3, j4, J, m3, m4, M)
+                    R_mat = dot_mat(theta1, phi1, theta2, phi2)
+                    for i in range(3):
+                        for k in range(3):
+                            mat_sum += np.dot(a.conj(), c[i])*np.dot(b.conj(), d[k])*R_mat[i, k]
+                    
+                    integrand+=(mat_sum)*cgc(j1, j2, J, m1, m2, M)*cgc(j3, j4, J, m3, m4, M)
 
     J_det = (np.sin(phi1)*((r1)**2))*(np.sin(phi2)*((r2)**2))
     return integrand*J_det
