@@ -26,7 +26,7 @@ def thj(j1, j2, j3, m1, m2, m3):
     ( j1 j2 j3 )
     ( m1 m2 m3 )
     """
-    #return wigner3j(j1,j2,j3,m1,m2,m3)
+    #return wigner_3j(j1,j2,j3,m1,m2,m3)
     return py3nj.wigner3j(int(2*j1),int(2*j2),int(2*j3),int(2*m1),int(2*m2),int(2*m3))
 
 def cgc(l, s, j, ml, ms, m):

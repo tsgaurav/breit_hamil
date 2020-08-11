@@ -75,9 +75,9 @@ domainsize6 = 4*math.pi**4
 
 nmc = 20000
 
-scale = 2#float(sys.argv[1])
+#scale = 2#float(sys.argv[1])
 
-a_gam = 2#float(sys.argv[1])
+#a_gam = 2#float(sys.argv[1])
 
 me_term = specific_ms
 
@@ -88,11 +88,11 @@ zeta = 1
 
 start = time.time()
 #result, error = mcint.integrate(normal_ms_alt, sampler_three(), measure=domainsize3, n=nmc)
-result, error = mcint.integrate(anti_symmetrize, sampler_six(), measure=domainsize6, n=nmc)
+#result, error = mcint.integrate(anti_symmetrize, sampler_six(), measure=domainsize6, n=nmc)
 
 #print("Scale =", scale)
-print("Result = ", result.real)
-print("Error estimate =", error)
+#print("Result = ", result.real)
+#print("Error estimate =", error)
 #print("Time =", time.time()-start)
 
 scales = np.array([1, 1.5, 2, 2.5, 3])
@@ -101,11 +101,11 @@ results = np.zeros(shape=(len(scales), len(gams)))
 errors = np.zeros(shape=(len(scales), len(gams)))
 
 
-for i, scale in scales:
-    for j, a_gam in gams:
+for i, scale in enumerate(scales):
+    for j, a_gam in enumerate(gams):
         result, error = mcint.integrate(anti_symmetrize, sampler_six(), measure=domainsize6, n=nmc)
         results[i, j] = result
-        errors[i, k] = error
+        errors[i, j] = error
 
 np.save("Results5533.npy", results)
 np.save("Errors5533.npy", errors)
